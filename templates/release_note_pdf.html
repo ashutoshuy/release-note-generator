@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Release Note</title>
+</head>
+<body>
+    <h1>Release Note</h1>
+    
+    <!-- Metadata table -->
+    <table class="metadata">
+        <tr>
+            <th>Team Name</th>
+            <td>{{ data.team_name }}</td>
+        </tr>
+        <tr>
+            <th>Release Version</th>
+            <td>{{ data.release_version }}</td>
+        </tr>
+        <tr>
+            <th>Platform Details</th>
+            <td>{{ data.platform_details }}</td>
+        </tr>
+        <tr>
+            <th>Git Version</th>
+            <td>{{ data.git_version }}</td>
+        </tr>
+        <tr>
+            <th>Git Checksum</th>
+            <td>{{ data.git_checksum }}</td>
+        </tr>
+        <tr>
+            <th>Build Checksum</th>
+            <td>{{ data.build_checksum }}</td>
+        </tr>
+        <tr>
+            <th>Development Start Date</th>
+            <td>{{ data.dev_start_date }}</td>
+        </tr>
+        <tr>
+            <th>Development End Date</th>
+            <td>{{ data.dev_end_date }}</td>
+        </tr>
+        <tr>
+            <th>Release By</th>
+            <td>{{ data.release_by }}</td>
+        </tr>
+        <tr>
+            <th>Reviewed By</th>
+            <td>{{ data.reviewed_by }}</td>
+        </tr>
+    </table>
+    
+    <h2>List of Release Details :-</h2>
+    
+    <!-- RCA -->
+    {% if data.categories.rca %}
+    <h3>#RCA</h3>
+    <p>{{ data.categories.rca }}</p>
+    {% endif %}
+    
+    <!-- Hot Fixed -->
+    {% if data.categories.hotfix %}
+    <h3>#Hot Fixed</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Redmine Tracker No</th>
+                <th>Description</th>
+                <th>Impacted Module list</th>
+                <th>Developed By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data.categories.hotfix %}
+            <tr>
+                <td>{{ item.redmine_no }}</td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.impacted_modules }}</td>
+                <td>{{ item.author_name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <!-- Maintenance Fixed -->
+    {% if data.categories.maintenance %}
+    <h3>#Maintenance Fixed</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Redmine Tracker No</th>
+                <th>Description</th>
+                <th>Impacted Module list</th>
+                <th>Developed By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data.categories.maintenance %}
+            <tr>
+                <td>{{ item.redmine_no }}</td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.impacted_modules }}</td>
+                <td>{{ item.author_name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <!-- Feature -->
+    {% if data.categories.feature %}
+    <h3>#Feature</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Redmine Tracker No</th>
+                <th>Description</th>
+                <th>Impacted Module list</th>
+                <th>Developed By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data.categories.feature %}
+            <tr>
+                <td>{{ item.redmine_no }}</td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.impacted_modules }}</td>
+                <td>{{ item.author_name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <!-- Enhancement -->
+    {% if data.categories.enhancement %}
+    <h3>#Enhancement</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Redmine Tracker No</th>
+                <th>Description</th>
+                <th>Impacted Module list</th>
+                <th>Developed By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data.categories.enhancement %}
+            <tr>
+                <td>{{ item.redmine_no }}</td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.impacted_modules }}</td>
+                <td>{{ item.author_name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <!-- Bug Fixed -->
+    {% if data.categories.bug %}
+    <h3>#Bug Fixed</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Redmine Tracker No</th>
+                <th>Issue Description</th>
+                <th>Impacted Module list</th>
+                <th>Developed By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data.categories.bug %}
+            <tr>
+                <td>{{ item.redmine_no }}</td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.impacted_modules }}</td>
+                <td>{{ item.author_name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <!-- Technical Changes -->
+    {% if data.technical_changes %}
+    <h3>#Technical Changes</h3>
+    <p>{{ data.technical_changes }}</p>
+    {% endif %}
+    
+    <!-- Extra Checkpoints -->
+    {% if data.extra_checkpoints %}
+    <h3>Extra Checkpoints:-</h3>
+    <p>{{ data.extra_checkpoints }}</p>
+    {% endif %}
+</body>
+</html>

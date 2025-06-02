@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prepare Release Note - {{ project.name }} - Release Note Generator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">Release Note Generator</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('projects') }}">Projects</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('release_history') }}">History</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <span class="nav-link">Welcome, {{ session.get('user_name', 'User') }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Prepare Release Note</h1>
+            <a href="{{ url_for('project_details', project_id=project.id) }}" class="btn btn-outline-secondary">
+                Back to Project
+            </a>
+        </div>
+        
+        <div class="alert alert-info">
+            <strong>Branch:</strong> {{ branch_name }}
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form action="{{ url_for('generate_release_note') }}" method="post" class="mb-5">
+            <input type="hidden" name="project_id" value="{{ project.id }}">
+            <input type="hidden" name="branch_name" value="{{ branch_name }}">
+            <input type="hidden" name="project_name" value="{{ project.name }}">
+            
+            <!-- Basic Release Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Basic Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="team_name" class="form-label">Team Name</label>
+                            <input type="text" class="form-control" id="team_name" name="team_name" 
+                                   value="{{ release_info.get('team_name', '') }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="release_version" class="form-label">Release Version</label>
+                            <input type="text" class="form-control" id="release_version" name="release_version" 
+                                   value="{{ release_info.get('version', '') }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="platform_details" class="form-label">Platform Details</label>
+                            <input type="text" class="form-control" id="platform_details" name="platform_details">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="git_version" class="form-label">Git Version</label>
+                            <input type="text" class="form-control" id="git_version" name="git_version" 
+                                   value="{{ release_info.get('git_version', '') }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="git_checksum" class="form-label">Git Checksum</label>
+                            <input type="text" class="form-control" id="git_checksum" name="git_checksum" 
+                                   value="{{ release_info.get('git_checksum', '') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="build_checksum" class="form-label">Build Checksum</label>
+                            <input type="text" class="form-control" id="build_checksum" name="build_checksum">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="dev_start_date" class="form-label">Development Start Date</label>
+                            <input type="date" class="form-control" id="dev_start_date" name="dev_start_date" 
+                                   value="{{ release_info.get('dev_start_date', '') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="dev_end_date" class="form-label">Development End Date</label>
+                            <input type="date" class="form-control" id="dev_end_date" name="dev_end_date" 
+                                   value="{{ release_info.get('dev_end_date', '') }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="release_by" class="form-label">Release By</label>
+                            <input type="text" class="form-control" id="release_by" name="release_by" 
+                                   value="{{ session.get('user_name', '') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="reviewed_by" class="form-label">Reviewed By</label>
+                            <input type="text" class="form-control" id="reviewed_by" name="reviewed_by">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Categorized Commits -->
+            {% set categories = [
+                ('rca', 'RCA'),
+                ('hotfix', 'Hot Fixed'),
+                ('maintenance', 'Maintenance Fixed'),
+                ('feature', 'Feature'),
+                ('enhancement', 'Enhancement'),
+                ('bug', 'Bug Fixed')
+            ] %}
+            
+            {% for category_id, category_name in categories %}
+                {% set commit_list = categorized_commits.get(category_id, []) %}
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title mb-0">#{{ category_name }}</h3>
+                    </div>
+                    <div class="card-body">
+                        {% if category_id == 'rca' %}
+                            <div class="mb-3">
+                                <label for="rca" class="form-label">RCA Details</label>
+                                <textarea class="form-control" id="rca" name="rca" rows="5"></textarea>
+                            </div>
+                        {% else %}
+                            {% if commit_list %}
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Include</th>
+                                                <th>Commit</th>
+                                                <th>Redmine No</th>
+                                                <th>Description</th>
+                                                <th>Impacted Modules</th>
+                                                <th>Developed By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for commit in commit_list %}
+                                            <tr>
+                                                <td>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input commit-checkbox" type="checkbox" 
+                                                               value="{{ commit.id }}" data-category="{{ category_id }}"
+                                                               id="commit_{{ commit.short_id }}" checked>
+                                                    </div>
+                                                </td>
+                                                <td>{{ commit.short_id }}</td>
+                                                <td>
+                                                    <input type="text" class="form-control form-control-sm redmine-no" 
+                                                           value="{{ commit.redmine_no }}" 
+                                                           data-commit-id="{{ commit.id }}"
+                                                           data-category="{{ category_id }}">
+                                                </td>
+                                                <td>
+                                                    <input type="text" class="form-control form-control-sm commit-title" 
+                                                           value="{{ commit.title }}" 
+                                                           data-commit-id="{{ commit.id }}"
+                                                           data-category="{{ category_id }}">
+                                                </td>
+                                                <td>
+                                                    <input type="text" class="form-control form-control-sm impacted-modules" 
+                                                           value="{{ commit.impacted_modules }}" 
+                                                           data-commit-id="{{ commit.id }}"
+                                                           data-category="{{ category_id }}">
+                                                </td>
+                                                <td>
+                                                    <input type="text" class="form-control form-control-sm developed-by" 
+                                                           value="{{ commit.author_name }}" 
+                                                           data-commit-id="{{ commit.id }}"
+                                                           data-category="{{ category_id }}">
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <input type="hidden" name="{{ category_id }}_json" id="{{ category_id }}_json" value="[]">
+                            {% else %}
+                                <div class="alert alert-secondary">
+                                    No commits found for this category.
+                                </div>
+                                <div class="mt-3">
+                                    <button type="button" class="btn btn-sm btn-success add-custom-entry" data-category="{{ category_id }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                                        </svg>
+                                        Add Custom Entry
+                                    </button>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <!-- Other Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Additional Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="technical_changes" class="form-label">Technical Changes</label>
+                        <textarea class="form-control" id="technical_changes" name="technical_changes" rows="5"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="extra_checkpoints" class="form-label">Extra Checkpoints</label>
+                        <textarea class="form-control" id="extra_checkpoints" name="extra_checkpoints" rows="5"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-grid">
+                <button type="submit" class="btn btn-success btn-lg">Generate Release Note</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Custom Entry Modal -->
+    <div class="modal fade" id="customEntryModal" tabindex="-1" aria-labelledby="customEntryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="customEntryModalLabel">Add Custom Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="customEntryForm">
+                        <input type="hidden" id="customEntryCategory">
+
+                        <div class="mb-3">
+                            <label for="customRedmineNo" class="form-label">Redmine Tracker No</label>
+                            <input type="text" class="form-control" id="customRedmineNo">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="customDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="customDescription" rows="3" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="customModules" class="form-label">Impacted Module list</label>
+                            <input type="text" class="form-control" id="customModules">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="customDevelopedBy" class="form-label">Developed By</label>
+                            <input type="text" class="form-control" id="customDevelopedBy" value="{{ session.get('user_name', '') }}">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveCustomEntry">Add Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Function to update JSON data for each category
+        function updateCategoryJson(category) {
+            const commits = [];
+            const checkboxes = document.querySelectorAll(`.commit-checkbox[data-category="${category}"]:checked`);
+
+            checkboxes.forEach(checkbox => {
+                const commitId = checkbox.value;
+                const tr = checkbox.closest('tr');
+
+                if (tr) {
+                    const redmineNo = tr.querySelector(`.redmine-no[data-commit-id="${commitId}"]`)?.value || '';
+                    const title = tr.querySelector(`.commit-title[data-commit-id="${commitId}"]`)?.value || '';
+                    const impactedModules = tr.querySelector(`.impacted-modules[data-commit-id="${commitId}"]`)?.value || '';
+                    const developedBy = tr.querySelector(`.developed-by[data-commit-id="${commitId}"]`)?.value || '';
+
+                    commits.push({
+                        id: commitId,
+                        redmine_no: redmineNo,
+                        title: title,
+                        impacted_modules: impactedModules,
+                        author_name: developedBy
+                    });
+                }
+            });
+
+            // Map category to the correct field name expected by the backend
+            const fieldNameMap = {
+                'feature': 'features_json',
+                'bug': 'bugs_json',
+                'enhancement': 'enhancements_json',
+                'hotfix': 'hotfixes_json', 
+                'maintenance': 'maintenance_json'
+            };
+
+            const fieldName = fieldNameMap[category] || `${category}_json`;
+            let jsonInput = document.getElementById(fieldName);
+
+            if (!jsonInput) {
+                // Create the field if it doesn't exist
+                jsonInput = document.createElement('input');
+                jsonInput.type = 'hidden';
+                jsonInput.name = fieldName;
+                jsonInput.id = fieldName;
+                document.querySelector('form').appendChild(jsonInput);
+            }
+
+            jsonInput.value = JSON.stringify(commits);
+        }
+
+        // Initialize JSON data for each category
+        document.addEventListener('DOMContentLoaded', function() {
+            const categories = ['feature', 'bug', 'enhancement', 'hotfix', 'maintenance'];
+
+            // Create mapping of field names
+            const fieldNameMap = {
+                'feature': 'features_json',
+                'bug': 'bugs_json',
+                'enhancement': 'enhancements_json',
+                'hotfix': 'hotfixes_json', 
+                'maintenance': 'maintenance_json'
+            };
+
+            // First, ensure all hidden inputs exist with the correct names
+            categories.forEach(category => {
+                const fieldName = fieldNameMap[category];
+                if (!document.getElementById(fieldName)) {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = fieldName;
+                    hiddenInput.id = fieldName;
+                    document.querySelector('form').appendChild(hiddenInput);
+                }
+
+                // Remove any old incorrect field names
+                const oldField = document.getElementById(`${category}_json`);
+                if (oldField && oldField.id !== fieldName) {
+                    oldField.parentNode.removeChild(oldField);
+                }
+            });
+
+            categories.forEach(category => {
+                // Initialize
+                updateCategoryJson(category);
+
+                // Add event listeners to inputs
+                const inputs = document.querySelectorAll(`[data-category="${category}"]`);
+                inputs.forEach(input => {
+                    input.addEventListener('change', () => updateCategoryJson(category));
+                });
+            });
+
+            // Update before form submission
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    categories.forEach(category => {
+                        updateCategoryJson(category);
+                    });
+                });
+            }
+        
+            // Custom entry functionality
+            const customEntryModalEl = document.getElementById('customEntryModal');
+            if (!customEntryModalEl) return;
+
+            const customEntryModal = new bootstrap.Modal(customEntryModalEl);
+            const customEntryForm = document.getElementById('customEntryForm');
+            const customEntryCategory = document.getElementById('customEntryCategory');
+
+            // Show modal when "Add Custom Entry" is clicked
+            function setupCustomEntryButtons() {
+                const addCustomEntryButtons = document.querySelectorAll('.add-custom-entry');
+                addCustomEntryButtons.forEach(button => {
+                    // Remove existing listeners to prevent duplicates
+                    const newButton = button.cloneNode(true);
+                    button.parentNode.replaceChild(newButton, button);
+
+                    newButton.addEventListener('click', function() {
+                        const category = this.getAttribute('data-category');
+                        if (customEntryCategory) {
+                            customEntryCategory.value = category;
+                            customEntryModal.show();
+                        }
+                    });
+                });
+            }
+
+            // Initial setup of buttons
+            setupCustomEntryButtons();
+
+            // Handle saving custom entry
+            const saveCustomEntryBtn = document.getElementById('saveCustomEntry');
+            if (saveCustomEntryBtn) {
+                saveCustomEntryBtn.addEventListener('click', function() {
+                    const category = customEntryCategory.value;
+                    const redmineNo = document.getElementById('customRedmineNo')?.value || '';
+                    const description = document.getElementById('customDescription')?.value || '';
+                    const modules = document.getElementById('customModules')?.value || '';
+                    const developedBy = document.getElementById('customDevelopedBy')?.value || '';
+
+                    if (!description) {
+                        alert('Description is required');
+                        return;
+                    }
+
+                    // Create a unique ID for the custom entry
+                    const customId = 'custom-' + Date.now();
+
+                    // Find table for this category using more compatible selector
+                    let tableBody = null;
+                    const tables = document.querySelectorAll('table');
+                    for (const table of tables) {
+                        if (table.querySelector(`[data-category="${category}"]`)) {
+                            tableBody = table.querySelector('tbody');
+                            break;
+                        }
+                    }
+
+                    if (tableBody) {
+                        // Table exists, add new row
+                        addCustomEntryToTable(tableBody, category, customId, redmineNo, description, modules, developedBy);
+                    } else {
+                        // No table exists, create one
+                        createNewTableForCategory(category, customId, redmineNo, description, modules, developedBy);
+                    }
+
+                    // Reset form and close modal
+                    if (customEntryForm) customEntryForm.reset();
+                    customEntryModal.hide();
+
+                    // Re-setup custom entry buttons
+                    setupCustomEntryButtons();
+                });
+            }
+        
+            function addCustomEntryToTable(tableBody, category, customId, redmineNo, description, modules, developedBy) {
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input commit-checkbox" type="checkbox" 
+                                   value="${customId}" data-category="${category}"
+                                   id="commit_${customId}" checked>
+                        </div>
+                    </td>
+                    <td>[Custom]</td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm redmine-no" 
+                               value="${redmineNo}" 
+                               data-commit-id="${customId}"
+                               data-category="${category}">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm commit-title" 
+                               value="${description}" 
+                               data-commit-id="${customId}"
+                               data-category="${category}">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm impacted-modules" 
+                               value="${modules}" 
+                               data-commit-id="${customId}"
+                               data-category="${category}">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm developed-by" 
+                               value="${developedBy}" 
+                               data-commit-id="${customId}"
+                               data-category="${category}">
+                    </td>
+                `;
+                
+                tableBody.appendChild(newRow);
+                
+                // Add event listeners to new inputs
+                const inputs = newRow.querySelectorAll('[data-category]');
+                inputs.forEach(input => {
+                    input.addEventListener('change', () => updateCategoryJson(category));
+                });
+
+                // Update JSON data
+                updateCategoryJson(category);
+            }
+        
+            function createNewTableForCategory(category, customId, redmineNo, description, modules, developedBy) {
+                // Find the category card using more compatible method
+                let categoryCard = null;
+                const cards = document.querySelectorAll('.card');
+                for (const card of cards) {
+                    const header = card.querySelector('.card-header');
+                    if (header && header.textContent.includes(getCategoryDisplayName(category))) {
+                        categoryCard = card;
+                        break;
+                    }
+                }
+
+                if (!categoryCard) return;
+
+                const cardBody = categoryCard.querySelector('.card-body');
+                if (!cardBody) return;
+
+                // Check if JSON input already exists with the correct name
+                const fieldNameMap = {
+                    'feature': 'features_json',
+                    'bug': 'bugs_json',
+                    'enhancement': 'enhancements_json',
+                    'hotfix': 'hotfixes_json', 
+                    'maintenance': 'maintenance_json'
+                };
+                
+                const fieldName = fieldNameMap[category] || `${category}_json`;
+                if (!document.getElementById(fieldName)) {
+                    const jsonInput = document.createElement('input');
+                    jsonInput.type = 'hidden';
+                    jsonInput.name = fieldName;
+                    jsonInput.id = fieldName;
+                    jsonInput.value = '[]';
+                    cardBody.appendChild(jsonInput);
+                }
+
+                // Replace content with new table
+                cardBody.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Include</th>
+                                    <th>Commit</th>
+                                    <th>Redmine No</th>
+                                    <th>Description</th>
+                                    <th>Impacted Modules</th>
+                                    <th>Developed By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input commit-checkbox" type="checkbox" 
+                                                   value="${customId}" data-category="${category}"
+                                                   id="commit_${customId}" checked>
+                                        </div>
+                                    </td>
+                                    <td>[Custom]</td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm redmine-no" 
+                                               value="${redmineNo}" 
+                                               data-commit-id="${customId}"
+                                               data-category="${category}">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm commit-title" 
+                                               value="${description}" 
+                                               data-commit-id="${customId}"
+                                               data-category="${category}">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm impacted-modules" 
+                                               value="${modules}" 
+                                               data-commit-id="${customId}"
+                                               data-category="${category}">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm developed-by" 
+                                               value="${developedBy}" 
+                                               data-commit-id="${customId}"
+                                               data-category="${category}">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-sm btn-success add-custom-entry" data-category="${category}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                            </svg>
+                            Add Custom Entry
+                        </button>
+                    </div>
+                `;
+                
+                // Re-append the hidden input for JSON data with the correct name
+                const jsonInput = document.getElementById(fieldName);
+                if (jsonInput) {
+                    cardBody.appendChild(jsonInput);
+                }
+
+                // Update JSON data
+                updateCategoryJson(category);
+
+                // Setup the new button
+                setupCustomEntryButtons();
+            }
+        
+            function getCategoryDisplayName(categoryId) {
+                const categoryMap = {
+                    'rca': 'RCA',
+                    'hotfix': 'Hot Fixed',
+                    'maintenance': 'Maintenance Fixed',
+                    'feature': 'Feature',
+                    'enhancement': 'Enhancement',
+                    'bug': 'Bug Fixed'
+                };
+                return categoryMap[categoryId] || categoryId;
+            }
+        });
+    </script>
+</body>
+</html>
