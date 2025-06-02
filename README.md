@@ -27,7 +27,7 @@ A Flask-based web application that automatically generates professional release 
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/ashutoshuy/release-note-generator
 cd release-notes-generator
 
 # Create virtual environment
