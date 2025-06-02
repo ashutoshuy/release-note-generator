@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 # Core Flask dependencies
+=======
+# requirements.txt
+>>>>>>> 5116b3a5672cd3d646260f6e651a0be056a2977f
 Flask==2.3.3
 Flask-SQLAlchemy==3.0.5
 Authlib==1.2.1
 requests==2.31.0
+<<<<<<< HEAD
 Jinja2==3.1.2
 urllib3==2.0.7
 
@@ -16,4 +21,12 @@ WeasyPrint==60.2
 psycopg2-binary==2.9.7
 
 # Development dependencies (optional)
+=======
+python-dotenv==1.0.0
+WeasyPrint==60.2
+Jinja2==3.1.2
+urllib3==2.0.7
+
+# For development
+>>>>>>> 5116b3a5672cd3d646260f6e651a0be056a2977f
 python-decouple==3.8
