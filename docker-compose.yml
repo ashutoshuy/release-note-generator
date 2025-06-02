@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///data/releases.db}
+      - GITHUB_ENABLED=${GITHUB_ENABLED:-false}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - GITLAB_ENABLED=${GITLAB_ENABLED:-false}
+      - GITLAB_CLIENT_ID=${GITLAB_CLIENT_ID}
+      - GITLAB_CLIENT_SECRET=${GITLAB_CLIENT_SECRET}
+      - GITLAB_URL=${GITLAB_URL:-https://gitlab.com}
+      - DEBUG=${DEBUG:-false}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: PostgreSQL database for production
+  # db:
+  #   image: postgres:15
+  #   environment:
+  #     POSTGRES_DB: releases
+  #     POSTGRES_USER: releases_user
+  #     POSTGRES_PASSWORD: your_password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+# volumes:
+#   postgres_data:
