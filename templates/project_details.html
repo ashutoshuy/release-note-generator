@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.name }} - Release Note Generator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">Release Note Generator</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('projects') }}">Projects</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('release_history') }}">History</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+			    <span class="nav-link">Welcome, {{ session.get('user_name', 'User') }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>{{ project.name }}</h1>
+            <a href="{{ url_for('projects') }}" class="btn btn-outline-secondary">
+                Back to Projects
+            </a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">Release Branches</h3>
+            </div>
+            <div class="card-body">
+                {% if release_branches %}
+                <div class="row">
+                    {% for branch in release_branches %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ branch.name }}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">Version: {{ branch.version }}</h6>
+                                <p class="card-text">
+                                    Last commit: {{ branch.commit.created_at.split('T')[0] }}
+                                </p>
+                            </div>
+                            <div class="card-footer bg-white">
+                                <a href="{{ url_for('prepare_release', project_id=project.id, branch_name=branch.name) }}"
+                                   class="btn btn-primary">
+                                    Generate Release Note
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    No release branches found. Release branches should follow the naming pattern "r_X.Y.Z".
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">All Branches</h3>
+                    <button class="btn btn-light btn-sm" id="toggleAllBranches">Show/Hide</button>
+                </div>
+            </div>
+            <div class="card-body" id="allBranchesSection" style="display: none;">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="branch-search" placeholder="Search branches...">
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Branch Name</th>
+                                <th>Last Commit</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-branches-table">
+                            <tr>
+                                <td colspan="3" class="text-center">Loading branches...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.getElementById('toggleAllBranches');
+            const branchesSection = document.getElementById('allBranchesSection');
+            const branchesTable = document.getElementById('all-branches-table');
+            const branchSearch = document.getElementById('branch-search');
+            let allBranches = [];
+            
+            // Define the project ID variable at the top level so it's available in all functions
+            const projectId = '{{ project.id }}';
+            
+            toggleButton.addEventListener('click', function() {
+                if (branchesSection.style.display === 'none') {
+                    branchesSection.style.display = 'block';
+                    // Only load branches the first time
+                    if (branchesTable.innerHTML.includes('Loading branches...')) {
+                        fetchAllBranches();
+                    }
+                } else {
+                    branchesSection.style.display = 'none';
+                }
+            });
+            
+            // Function to fetch all branches - Fixed the typo in the function name
+            function fetchAllBranches() {
+                fetch(`/api/project/${projectId}/branches`)
+                    .then(response => response.json())
+                    .then(branches => {
+                        allBranches = branches;
+                        renderBranchTable(branches);
+                    })
+                    .catch(error => {
+                        branchesTable.innerHTML = `
+                            <tr>
+                                <td colspan="3" class="text-center text-danger">
+                                    Error loading branches: ${error.message}
+                                </td>
+                            </tr>
+                        `;
+                    });
+            }
+            
+            // Function to render branch table
+            function renderBranchTable(branches) {
+                if (branches.length === 0) {
+                    branchesTable.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="text-center">No branches found</td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                let tableHtml = '';
+                branches.forEach(branch => {
+                    const isReleaseBranch = branch.name.startsWith('r_');
+                    tableHtml += `
+                        <tr${isReleaseBranch ? ' class="table-primary"' : ''}>
+                            <td>${branch.name}</td>
+                            <td>${new Date(branch.commit.created_at).toLocaleDateString()}</td>
+                            <td>
+                                <a href="/prepare_release/${projectId}/${branch.name}" 
+                                   class="btn btn-sm btn-primary">
+                                    Generate Release Note
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                branchesTable.innerHTML = tableHtml;
+            }
+            
+            // Branch search functionality
+            branchSearch.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+                
+                const filteredBranches = allBranches.filter(branch => 
+                    branch.name.toLowerCase().includes(searchTerm)
+                );
+                
+                renderBranchTable(filteredBranches);
+            });
+        });
+    </script> 
+
+
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Release Note Generator - Automate Your Release Documentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s ease-out',
+                        'fade-in-down': 'fadeInDown 0.6s ease-out',
+                        'slide-in-left': 'slideInLeft 0.6s ease-out',
+                        'slide-in-right': 'slideInRight 0.6s ease-out',
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        fadeInDown: {
+                            '0%': { opacity: '0', transform: 'translateY(-30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        slideInLeft: {
+                            '0%': { opacity: '0', transform: 'translateX(-30px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        },
+                        slideInRight: {
+                            '0%': { opacity: '0', transform: 'translateX(30px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        }
+                    },
+                    backgroundImage: {
+                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+                        'mesh': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        
+        .floating-shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .floating-shape:nth-child(1) {
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .floating-shape:nth-child(2) {
+            top: 60%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+        
+        .floating-shape:nth-child(3) {
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .provider-card {
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+        
+        .provider-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white overflow-x-hidden">
+    <!-- Floating background shapes -->
+    <div class="floating-shapes">
+        <div class="floating-shape w-32 h-32 bg-purple-500 rounded-full"></div>
+        <div class="floating-shape w-24 h-24 bg-blue-500 rounded-full"></div>
+        <div class="floating-shape w-40 h-40 bg-indigo-500 rounded-full"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="relative z-10 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3 animate-fade-in-down">
+                <div class="w-10 h-10 bg-gradient-to-r from-purple-400 to-blue-400 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                    Release Notes
+                </h1>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-6 animate-fade-in-down">
+                <a href="#features" class="hover:text-purple-300 transition-colors">Features</a>
+                <a href="#how-it-works" class="hover:text-purple-300 transition-colors">How it Works</a>
+                <a href="#providers" class="hover:text-purple-300 transition-colors">Providers</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative z-10 px-6 py-20">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 animate-fade-in-up">
+                Automate Your
+                <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+                    Release Notes
+                </span>
+            </h1>
+            
+            <p class="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto animate-fade-in-up" style="animation-delay: 0.2s">
+                Generate professional release documentation from your Git commits automatically. 
+                Support for GitHub, GitLab, and more platforms.
+            </p>
+            
+            {% if providers %}
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-6 animate-fade-in-up" style="animation-delay: 0.4s">
+                <span class="text-lg text-gray-400">Get started with:</span>
+                <div class="flex flex-wrap justify-center gap-4">
+                    {% for provider_key, provider_config in providers.items() %}
+                    <a href="{{ url_for('login', provider=provider_key) }}" 
+                       class="provider-card flex items-center space-x-3 px-6 py-3 glass-effect rounded-xl hover:bg-white/20 transition-all group">
+                        {% if provider_key == 'github' %}
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        {% elif provider_key == 'gitlab' %}
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="m23.6004 9.5927-.0337-.0862L20.3.9814a.851.851 0 0 0-.3362-.405.8748.8748 0 0 0-.9997.0539.8748.8748 0 0 0-.29.4399l-2.2055 6.748H7.5375l-2.2057-6.748a.8573.8573 0 0 0-.29-.4412.8748.8748 0 0 0-.9997-.0537.8585.8585 0 0 0-.3362.4049L.4332 9.5015l-.0325.0862a6.0816 6.0816 0 0 0 2.0119 7.0105l.0113.0087.03.0213 4.976 3.7264 2.462 1.8633 1.4995 1.1321a1.0085 1.0085 0 0 0 1.2197 0l1.4995-1.1321 2.4619-1.8633 5.006-3.7477.0125-.01a6.0816 6.0816 0 0 0 2.0094-7.003z"/>
+                        </svg>
+                        {% elif provider_key == 'google' %}
+                        <svg class="w-6 h-6" viewBox="0 0 24 24">
+                            <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        {% endif %}
+                        <span class="font-semibold">{{ provider_config.name }}</span>
+                        <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="animate-fade-in-up" style="animation-delay: 0.4s">
+                <div class="bg-yellow-900/50 border border-yellow-700 rounded-lg p-6 max-w-2xl mx-auto">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        <h3 class="text-xl font-semibold text-yellow-400">Configuration Required</h3>
+                    </div>
+                    <p class="text-yellow-100 mb-4">No authentication providers are configured. Please set up at least one provider:</p>
+                    <div class="bg-gray-900/50 rounded-lg p-4 text-sm font-mono">
+                        <p class="text-green-400"># GitHub</p>
+                        <p class="text-gray-300">GITHUB_ENABLED=true</p>
+                        <p class="text-gray-300">GITHUB_CLIENT_ID=your_client_id</p>
+                        <p class="text-gray-300">GITHUB_CLIENT_SECRET=your_client_secret</p>
+                        <br>
+                        <p class="text-green-400"># GitLab</p>
+                        <p class="text-gray-300">GITLAB_ENABLED=true</p>
+                        <p class="text-gray-300">GITLAB_CLIENT_ID=your_client_id</p>
+                        <p class="text-gray-300">GITLAB_CLIENT_SECRET=your_client_secret</p>
+                        <p class="text-gray-300">GITLAB_URL=https://gitlab.com</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="relative z-10 px-6 py-20 bg-black/20">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-16 animate-fade-in-up">
+                Powerful Features for Modern Teams
+            </h2>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass-effect rounded-2xl p-8 animate-slide-in-left">
+                    <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Automated Generation</h3>
+                    <p class="text-gray-300">Automatically parse commit messages and categorize changes by features, bugs, enhancements, and more.</p>
+                </div>
+                
+                <div class="glass-effect rounded-2xl p-8 animate-fade-in-up" style="animation-delay: 0.2s">
+                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Professional PDFs</h3>
+                    <p class="text-gray-300">Generate beautifully formatted PDF release notes with professional styling and comprehensive details.</p>
+                </div>
+                
+                <div class="glass-effect rounded-2xl p-8 animate-slide-in-right">
+                    <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Multi-Platform</h3>
+                    <p class="text-gray-300">Support for GitHub, GitLab, and Google Sign-In. Easy OAuth integration for secure access.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works Section -->
+    <section id="how-it-works" class="relative z-10 px-6 py-20">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-16 animate-fade-in-up">
+                How It Works
+            </h2>
+            
+            <div class="space-y-12">
+                <div class="flex items-center space-x-8 animate-slide-in-left">
+                    <div class="flex-shrink-0 w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-2xl font-bold">1</div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-2">Connect Your Repository</h3>
+                        <p class="text-gray-300">Authenticate with GitHub, GitLab, or Google and select your project repository.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-8 animate-slide-in-right">
+                    <div class="flex-shrink-0 w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-2xl font-bold">2</div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-2">Choose Release Branch</h3>
+                        <p class="text-gray-300">Select your release branch (r_X.Y.Z or release/X.Y.Z) and let us analyze the commits.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-8 animate-slide-in-left">
+                    <div class="flex-shrink-0 w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-2xl font-bold">3</div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-2">Review & Customize</h3>
+                        <p class="text-gray-300">Review categorized commits, add additional details, and customize your release notes.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-8 animate-slide-in-right">
+                    <div class="flex-shrink-0 w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-2xl font-bold">4</div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-2">Generate & Download</h3>
+                        <p class="text-gray-300">Generate professional PDF release notes and download them instantly.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Providers Section -->
+    {% if providers %}
+    <section id="providers" class="relative z-10 px-6 py-20 bg-black/20">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-4xl font-bold mb-8 animate-fade-in-up">
+                Supported Platforms
+            </h2>
+            <p class="text-xl text-gray-300 mb-12 animate-fade-in-up" style="animation-delay: 0.2s">
+                Seamlessly integrate with your favorite development platforms
+            </p>
+            
+            <div class="grid md:grid-cols-{{ providers|length }} gap-8">
+                {% for provider_key, provider_config in providers.items() %}
+                <div class="glass-effect rounded-2xl p-8 animate-fade-in-up" style="animation-delay: {{ loop.index0 * 0.2 }}s">
+                    <div class="w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+                        {% if provider_key == 'github' %}
+                        <svg class="w-12 h-12 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        {% elif provider_key == 'gitlab' %}
+                        <svg class="w-12 h-12 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="m23.6004 9.5927-.0337-.0862L20.3.9814a.851.851 0 0 0-.3362-.405.8748.8748 0 0 0-.9997.0539.8748.8748 0 0 0-.29.4399l-2.2055 6.748H7.5375l-2.2057-6.748a.8573.8573 0 0 0-.29-.4412.8748.8748 0 0 0-.9997-.0537.8585.8585 0 0 0-.3362.4049L.4332 9.5015l-.0325.0862a6.0816 6.0816 0 0 0 2.0119 7.0105l.0113.0087.03.0213 4.976 3.7264 2.462 1.8633 1.4995 1.1321a1.0085 1.0085 0 0 0 1.2197 0l1.4995-1.1321 2.4619-1.8633 5.006-3.7477.0125-.01a6.0816 6.0816 0 0 0 2.0094-7.003z"/>
+                        </svg>
+                        {% elif provider_key == 'google' %}
+                        <svg class="w-12 h-12" viewBox="0 0 24 24">
+                            <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">{{ provider_config.name }}</h3>
+                    <p class="text-gray-300 mb-6">
+                        {% if provider_key == 'github' %}
+                        Connect with GitHub to access your repositories and generate release notes from commits.
+                        {% elif provider_key == 'gitlab' %}
+                        Integrate with GitLab for seamless access to your projects and automated documentation.
+                        {% elif provider_key == 'google' %}
+                        Use Google Sign-In for secure authentication and access management.
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('login', provider=provider_key) }}" 
+                       class="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 px-6 py-3 rounded-lg font-semibold transition-all">
+                        <span>Connect {{ provider_config.name }}</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="relative z-10 px-6 py-12 bg-black/40">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="flex items-center justify-center space-x-3 mb-6">
+                <div class="w-8 h-8 bg-gradient-to-r from-purple-400 to-blue-400 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                    Release Notes Generator
+                </h3>
+            </div>
+            
+            <p class="text-gray-400 mb-8">
+                Streamline your release documentation process with automated generation from Git commits.
+            </p>
+            
+            <div class="border-t border-gray-700 pt-6">
+                <p class="text-gray-500 text-sm">
+                    © 2025 Release Notes Generator. Built with ❤️ for development teams.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Add smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Add entrance animations on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all animated elements
+        document.querySelectorAll('.animate-fade-in-up, .animate-slide-in-left, .animate-slide-in-right').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
