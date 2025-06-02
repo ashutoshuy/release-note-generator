@@ -28,7 +28,7 @@ A Flask-based web application that automatically generates professional release 
 ```bash
 # Clone the repository
 git clone https://github.com/ashutoshuy/release-note-generator
-cd release-notes-generator
+cd release-note-generator
 
 # Create virtual environment
 python -m venv venv
@@ -215,7 +215,7 @@ Response:
 ## 🏗️ Project Structure
 
 ```
-release-notes-generator/
+/
 ├── main.py                 # Main application file
 ├── run.py                  # Startup script
 ├── requirements.txt        # Python dependencies
